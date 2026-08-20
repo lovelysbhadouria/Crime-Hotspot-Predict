@@ -1,0 +1,56 @@
+{
+  "best_model": "Random Forest",
+  "results": {
+    "Logistic Regression": {
+      "Accuracy": 0.8745,
+      "Precision": 0.9776,
+      "Recall": 0.3815,
+      "F1": 0.5488,
+      "ROC-AUC": 0.9292,
+      "PAI": 4.884
+    },
+    "Decision Tree": {
+      "Accuracy": 0.9519,
+      "Precision": 0.8509,
+      "Recall": 0.9209,
+      "F1": 0.8845,
+      "ROC-AUC": 0.9494,
+      "PAI": 4.251
+    },
+    "Random Forest": {
+      "Accuracy": 0.96,
+      "Precision": 0.8883,
+      "Recall": 0.9154,
+      "F1": 0.9017,
+      "ROC-AUC": 0.9471,
+      "PAI": 4.439
+    },
+    "Gradient Boosting": {
+      "Accuracy": 0.9593,
+      "Precision": 0.887,
+      "Recall": 0.9131,
+      "F1": 0.8999,
+      "ROC-AUC": 0.9579,
+      "PAI": 4.432
+    },
+    "XGBoost": {
+      "Accuracy": 0.9525,
+      "Precision": 0.8519,
+      "Recall": 0.9233,
+      "F1": 0.8862,
+      "ROC-AUC": 0.9668,
+      "PAI": 4.257
+    }
+  },
+  "top_features": {
+    "kde_lag1": 0.2153,
+    "kde_lag3": 0.129,
+    "months_elapsed": 0.0839,
+    "lag_1": 0.0116,
+    "rolling_3m": 0.011,
+    "rolling_6m": 0.0102,
+    "education_score": 0.0094,
+    "lag_3": 0.0089
+  },
+  "test_period": "2025-06 to 2026-05"
+}
