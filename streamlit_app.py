@@ -63,14 +63,22 @@ st.caption("Predicted probability that each LSOA is a crime hotspot "
 # ── Prepare month's data ─────────────────────────────────────────
 month_data = preds[preds["year_month"] == month].copy()
 map_df = geo.merge(month_data, on="lsoa_code", how="left")
+map_df = map_df.reset_index(drop=True)  # clean 0..n-1 index, used as the id link below
 
 col1, col2 = st.columns([2, 1])
 
 with col1:
+    # IMPORTANT: pass the geometry of the FULL GeoDataFrame (not just
+    # `.geometry.__geo_interface__`) so each feature carries an "id"
+    # matching map_df's index. Without this, Plotly cannot reliably
+    # pair each polygon to its pred_prob value and the fill color
+    # becomes disconnected from the data (this was the bug causing
+    # the map to look identical — and wrongly colored — every month).
     fig = px.choropleth_mapbox(
         map_df,
-        geojson=map_df.geometry.__geo_interface__,
+        geojson=map_df.__geo_interface__,
         locations=map_df.index,
+        featureidkey="id",
         color="pred_prob",
         color_continuous_scale="YlOrRd",
         range_color=(0, 1),
