@@ -2,55 +2,55 @@
   "best_model": "Random Forest",
   "results": {
     "Logistic Regression": {
-      "Accuracy": 0.8745,
-      "Precision": 0.9776,
-      "Recall": 0.3815,
-      "F1": 0.5488,
-      "ROC-AUC": 0.9292,
-      "PAI": 4.884
+      "Accuracy": 0.8673,
+      "Precision": 0.9795,
+      "Recall": 0.3436,
+      "F1": 0.5087,
+      "ROC-AUC": 0.9221,
+      "PAI": 4.897
     },
     "Decision Tree": {
-      "Accuracy": 0.9519,
-      "Precision": 0.8509,
-      "Recall": 0.9209,
-      "F1": 0.8845,
-      "ROC-AUC": 0.9494,
-      "PAI": 4.251
+      "Accuracy": 0.9525,
+      "Precision": 0.8574,
+      "Recall": 0.9146,
+      "F1": 0.8851,
+      "ROC-AUC": 0.947,
+      "PAI": 4.286
     },
     "Random Forest": {
-      "Accuracy": 0.96,
-      "Precision": 0.8883,
-      "Recall": 0.9154,
-      "F1": 0.9017,
-      "ROC-AUC": 0.9471,
-      "PAI": 4.439
+      "Accuracy": 0.9576,
+      "Precision": 0.8799,
+      "Recall": 0.9125,
+      "F1": 0.8959,
+      "ROC-AUC": 0.9509,
+      "PAI": 4.399
     },
     "Gradient Boosting": {
-      "Accuracy": 0.9593,
-      "Precision": 0.887,
-      "Recall": 0.9131,
-      "F1": 0.8999,
-      "ROC-AUC": 0.9579,
-      "PAI": 4.432
+      "Accuracy": 0.9575,
+      "Precision": 0.8802,
+      "Recall": 0.9117,
+      "F1": 0.8957,
+      "ROC-AUC": 0.9535,
+      "PAI": 4.4
     },
     "XGBoost": {
-      "Accuracy": 0.9525,
-      "Precision": 0.8519,
-      "Recall": 0.9233,
-      "F1": 0.8862,
-      "ROC-AUC": 0.9668,
-      "PAI": 4.257
+      "Accuracy": 0.9532,
+      "Precision": 0.8569,
+      "Recall": 0.9194,
+      "F1": 0.887,
+      "ROC-AUC": 0.9618,
+      "PAI": 4.284
     }
   },
   "top_features": {
-    "kde_lag1": 0.2153,
-    "kde_lag3": 0.129,
-    "months_elapsed": 0.0839,
-    "lag_1": 0.0116,
-    "rolling_3m": 0.011,
-    "rolling_6m": 0.0102,
-    "education_score": 0.0094,
-    "lag_3": 0.0089
+    "kde_lag1": 0.2077,
+    "kde_lag3": 0.1297,
+    "months_elapsed": 0.0767,
+    "lag_1": 0.018,
+    "rolling_3m": 0.0133,
+    "lag_3": 0.0101,
+    "lag_2": 0.0099,
+    "rolling_6m": 0.0083
   },
   "test_period": "2025-06 to 2026-05"
 }
