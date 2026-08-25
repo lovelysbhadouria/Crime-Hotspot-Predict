@@ -1,56 +1,62 @@
 {
-  "best_model": "Random Forest",
+  "best_model": "Gradient Boosting",
   "results": {
     "Logistic Regression": {
-      "Accuracy": 0.8673,
-      "Precision": 0.9795,
-      "Recall": 0.3436,
-      "F1": 0.5087,
-      "ROC-AUC": 0.9221,
-      "PAI": 4.897
+      "Accuracy": 0.9544,
+      "Precision": 0.9573,
+      "Recall": 0.808,
+      "F1": 0.8763,
+      "ROC-AUC": 0.9927,
+      "PAI": 4.786
     },
     "Decision Tree": {
-      "Accuracy": 0.9525,
-      "Precision": 0.8574,
-      "Recall": 0.9146,
-      "F1": 0.8851,
-      "ROC-AUC": 0.947,
-      "PAI": 4.286
+      "Accuracy": 0.9829,
+      "Precision": 0.929,
+      "Recall": 0.9902,
+      "F1": 0.9586,
+      "ROC-AUC": 0.996,
+      "PAI": 4.644
     },
     "Random Forest": {
-      "Accuracy": 0.9576,
-      "Precision": 0.8799,
-      "Recall": 0.9125,
-      "F1": 0.8959,
-      "ROC-AUC": 0.9509,
-      "PAI": 4.399
+      "Accuracy": 0.9878,
+      "Precision": 0.9524,
+      "Recall": 0.9885,
+      "F1": 0.9701,
+      "ROC-AUC": 0.9994,
+      "PAI": 4.761
     },
     "Gradient Boosting": {
-      "Accuracy": 0.9575,
-      "Precision": 0.8802,
-      "Recall": 0.9117,
-      "F1": 0.8957,
-      "ROC-AUC": 0.9535,
-      "PAI": 4.4
+      "Accuracy": 0.9881,
+      "Precision": 0.9567,
+      "Recall": 0.9853,
+      "F1": 0.9708,
+      "ROC-AUC": 0.9994,
+      "PAI": 4.783
     },
     "XGBoost": {
-      "Accuracy": 0.9532,
-      "Precision": 0.8569,
-      "Recall": 0.9194,
-      "F1": 0.887,
-      "ROC-AUC": 0.9618,
-      "PAI": 4.284
+      "Accuracy": 0.9855,
+      "Precision": 0.9384,
+      "Recall": 0.9928,
+      "F1": 0.9648,
+      "ROC-AUC": 0.9994,
+      "PAI": 4.691
     }
   },
   "top_features": {
-    "kde_lag1": 0.2077,
-    "kde_lag3": 0.1297,
-    "months_elapsed": 0.0767,
-    "lag_1": 0.018,
-    "rolling_3m": 0.0133,
-    "lag_3": 0.0101,
-    "lag_2": 0.0099,
-    "rolling_6m": 0.0083
+    "kde_lag1": 0.2481,
+    "kde_lag3": 0.1737,
+    "imd_score": 0.0148,
+    "months_elapsed": 0.0133,
+    "education_score": 0.0102,
+    "lag_1": 0.0101,
+    "crime_domain_score": 0.0093,
+    "rolling_3m": 0.0093
   },
-  "test_period": "2025-06 to 2026-05"
+  "test_period": "2025-06 to 2026-04",
+  "baseline_comparison": {
+    "naive_persistence_f1": 0.9733,
+    "best_model_f1": 0.9708,
+    "model_beats_naive": false
+  },
+  "imputation_note": "Medians for missing lag/rolling features computed on training period only."
 }
