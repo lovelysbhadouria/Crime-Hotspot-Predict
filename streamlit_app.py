@@ -221,7 +221,7 @@ with col1:
         geojson=map_df.__geo_interface__,
         locations=map_df.index,
         featureidkey="id",
-        mapbox_style="carto-positron",
+        map_style="carto-positron",
         center={"lat": 51.5074, "lon": -0.1278},
         zoom=9,
         opacity=0.75,
@@ -269,7 +269,7 @@ with col1:
             color_continuous_scale="Blues",
             range_color=(0, crime_scale_max),
         )
-    fig = px.choropleth_mapbox(**map_kwargs)
+        fig = px.choropleth_map(**map_kwargs)
     fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     st.plotly_chart(fig, width="stretch", config={"scrollZoom": True, "displaylogo": False})
 
