@@ -269,7 +269,7 @@ with col1:
             color_continuous_scale="Blues",
             range_color=(0, crime_scale_max),
         )
-        fig = px.choropleth_map(**map_kwargs)
+    fig = px.choropleth_map(**map_kwargs)
     fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     st.plotly_chart(fig, width="stretch", config={"scrollZoom": True, "displaylogo": False})
 
