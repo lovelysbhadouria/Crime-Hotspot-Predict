@@ -1,5 +1,5 @@
 """
-Crime Hotspot Prediction — Interactive Dashboard
+Crime Hotspot Prediction - Interactive Dashboard
 Run locally with:  streamlit run streamlit_app.py
 
 Expects three files in ./app_data/ (produced by export_for_app.py):
@@ -8,6 +8,7 @@ Expects three files in ./app_data/ (produced by export_for_app.py):
   model_metrics.json
 """
 import json
+from pathlib import Path
 import pandas as pd
 import geopandas as gpd
 import streamlit as st
@@ -17,14 +18,19 @@ st.set_page_config(page_title="London Crime Hotspot Predictor", layout="wide")
 
 # ── Load data (cached so it only happens once per session) ──────
 @st.cache_data
-def load_data():
+def load_data(predictions_mtime, boundaries_mtime, metrics_mtime):
     preds = pd.read_csv("app_data/predictions.csv")
     geo = gpd.read_file("app_data/lsoa_boundaries.geojson")
     with open("app_data/model_metrics.json") as f:
         metrics = json.load(f)
     return preds, geo, metrics
 
-preds, geo, metrics = load_data()
+preds, geo, metrics = load_data(
+    Path("app_data/predictions.csv").stat().st_mtime_ns,
+    Path("app_data/lsoa_boundaries.geojson").stat().st_mtime_ns,
+    Path("app_data/model_metrics.json").stat().st_mtime_ns,
+)
+boroughs = sorted(geo["borough"].dropna().unique()) if "borough" in geo.columns else []
 
 
 def classification_metrics(data):
@@ -50,8 +56,12 @@ metrics_differ = any(
 st.sidebar.title("Choose a month")
 months = sorted(preds["year_month"].unique())
 month = st.sidebar.selectbox("Month", months, index=0)
+selected_borough = st.sidebar.selectbox("Borough (optional)", ["All London"] + boroughs)
 
 lsoas_this_month = sorted(preds.loc[preds["year_month"] == month, "lsoa_code"].unique())
+if selected_borough != "All London":
+    borough_lsoas = set(geo.loc[geo["borough"] == selected_borough, "lsoa_code"])
+    lsoas_this_month = [c for c in lsoas_this_month if c in borough_lsoas]
 lsoa = st.sidebar.text_input(
     "Area code (optional)",
     placeholder="e.g. E01000001",
@@ -69,7 +79,22 @@ map_mode = st.sidebar.radio(
 with st.sidebar.expander("How this forecast was made"):
     st.markdown(f"**Forecast method:** {metrics['best_model']}")
     st.markdown(f"**Forecast period tested:** {metrics['test_period']}")
-    st.caption("The map shows a genuine one-month-ahead forecast, using information available before the selected month.")
+    st.caption(
+        "The model makes a one-month-ahead area-level forecast using information available before the selected month. "
+        "It uses recent crime counts, rolling crime history, time elapsed, and lagged spatial density."
+    )
+    st.markdown(
+        "**How areas are flagged**\n\n"
+        "The map flags the highest-ranked 20% of areas in each month. This keeps the hotspot definition consistent "
+        "with the recorded hotspot label. It is a ranking for attention, not a probability or guarantee."
+    )
+    st.markdown(
+        f"**Why {metrics['best_model']}**\n\n"
+        f"{metrics['best_model']} is selected because it has the highest F1 score in the stored comparison: "
+        f"**{metadata_metrics['F1']:.4f}**. "
+        "F1 balances precision and recall, while ROC-AUC, accuracy, precision, recall, and PAI provide additional "
+        "views of forecast performance."
+    )
     st.markdown(
         f"**Forecast quality**\n\n"
         f"Overall accuracy: **{exported_metrics[0]:.1%}**  \n"
@@ -77,13 +102,38 @@ with st.sidebar.expander("How this forecast was made"):
         f"Recorded hotspots found: **{exported_metrics[2]:.1%}**  \n"
         f"Overall balance score: **{exported_metrics[3]:.3f}**"
     )
-    st.caption("Calculated from the prediction rows displayed by this app. The selected month can perform differently.")
+    st.caption(
+        "These headline figures are recalculated from the prediction rows displayed by this app. "
+        "The selected month or borough can perform differently."
+    )
+
+with st.sidebar.expander("Does the model beat a simple guess?"):
+    baseline_comparison = metrics.get("baseline_comparison")
+    if baseline_comparison:
+        st.markdown(
+            f"**Naive baseline (repeat last month):** F1 = {baseline_comparison['naive_persistence_f1']:.4f}  \n"
+            f"**{metrics['best_model']} (trained model):** F1 = {baseline_comparison['best_model_f1']:.4f}"
+        )
+        if baseline_comparison["model_beats_naive"]:
+            st.success("The trained model outperforms simply repeating last month's hotspot status.")
+        else:
+            st.info(
+                "Across the full test period, the trained model performs close to, and here marginally "
+                "below, a naive baseline that simply repeats last month's hotspot status. This indicates "
+                "that hotspots in this dataset are highly persistent month-to-month, which is itself a "
+                "meaningful finding (see the dissertation's Discussion section). The 'Previous month baseline' "
+                "metric on the main page shows this same comparison for the currently selected month."
+            )
+    else:
+        st.caption("Baseline comparison not available in this build of model_metrics.json.")
 
 if metrics_differ:
-    st.warning(
-        "The stored model report does not exactly match the exported prediction rows. "
-        "The headline metrics above are recalculated from the displayed rows; investigate "
-        "the original training/export pipeline before using the historical model comparison."
+    st.info(
+        "The comparison uses two deliberate definitions of a positive prediction. "
+        "The stored model report uses the model's standard 0.5 probability threshold, "
+        "matching the dissertation results, while the map uses a top-20%-per-month cutoff "
+        "to match the hotspot definition. Their precision, recall, and F1 values can therefore differ. "
+        "The forecast-quality figures above are recalculated from the rows displayed by this app."
     )
 
 # ── Main title ─────────────────────────────────────────────────
@@ -101,9 +151,17 @@ else:
     map_help = "**How to read the map:** darker blue means more crimes were recorded in the selected month."
 st.info(map_help + " Hover over an area to see its neighbourhood code and prediction. "
         "A hotspot is a forecast based on recent patterns, not a promise that crimes will be recorded in that month.")
+if selected_borough != "All London":
+    st.caption(
+        f"{selected_borough} is filtered from the London-wide forecast. Hotspot flags use the highest-ranked "
+        "20% of areas across London, so a borough can have recorded crimes without any area being flagged."
+    )
 
 # ── Prepare month's data ─────────────────────────────────────────
 month_data = preds[preds["year_month"] == month].copy()
+if selected_borough != "All London":
+    borough_lsoas = set(geo.loc[geo["borough"] == selected_borough, "lsoa_code"])
+    month_data = month_data[month_data["lsoa_code"].isin(borough_lsoas)]
 month_position = months.index(month)
 if month_position > 0:
     previous_month = months[month_position - 1]
@@ -145,7 +203,8 @@ month_data.loc[
     (month_data["pred_binary"] == 1) & ((month_data["pred_prob"] - boundary) >= 0.1),
     "signal_position",
 ] = "Above hotspot cutoff"
-map_df = geo.merge(month_data, on="lsoa_code", how="left")
+geo_filtered = geo if selected_borough == "All London" else geo[geo["borough"] == selected_borough]
+map_df = geo_filtered.merge(month_data, on="lsoa_code", how="left")
 map_df = map_df.reset_index(drop=True)  # clean 0..n-1 index, used as the id link below
 
 col1, col2 = st.columns([2, 1])
@@ -156,7 +215,7 @@ with col1:
     # matching map_df's index. Without this, Plotly cannot reliably
     # pair each polygon to its pred_prob value and the fill color
     # becomes disconnected from the data (this was the bug causing
-    # the map to look identical — and wrongly colored — every month).
+    # the map to look identical - and wrongly colored - every month).
     map_kwargs = dict(
         data_frame=map_df,
         geojson=map_df.__geo_interface__,
@@ -204,17 +263,18 @@ with col1:
             },
         )
     else:
+        crime_scale_max = max(1, float(month_data["total_crimes"].quantile(0.95)))
         map_kwargs.update(
             color="total_crimes",
             color_continuous_scale="Blues",
-            range_color=(0, max(1, int(month_data["total_crimes"].max()))),
+            range_color=(0, crime_scale_max),
         )
     fig = px.choropleth_mapbox(**map_kwargs)
     fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
-    st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True, "displaylogo": False})
+    st.plotly_chart(fig, width="stretch", config={"scrollZoom": True, "displaylogo": False})
 
 with col2:
-    st.subheader(f"Month summary — {month}")
+    st.subheader(f"Month summary - {month}")
     n_actual = int(month_data["is_hotspot"].sum())
     n_pred = int(month_data["pred_binary"].sum())
     st.metric("Areas flagged as hotspots", f"{n_pred:,}")
@@ -224,7 +284,7 @@ with col2:
     correct = ((month_data["is_hotspot"] == 1) & (month_data["pred_binary"] == 1)).sum()
     flagged_correctly = correct / n_actual if n_actual else 0
     flagged_precision = correct / n_pred if n_pred else 0
-    st.metric("Recorded hotspots correctly flagged", f"{correct:,} / {n_actual:,}" if n_actual else "—")
+    st.metric("Recorded hotspots correctly flagged", f"{correct:,} / {n_actual:,}" if n_actual else "-")
     st.caption(
         f"Found **{flagged_correctly:.1%}** of recorded hotspots; "
         f"**{flagged_precision:.1%}** of flagged areas were hotspots."
@@ -241,7 +301,7 @@ with col2:
             f"Compared with {previous_month}: **{new_count:,}** new, "
             f"**{dropped_count:,}** no longer flagged."
         )
-        st.metric("Previous month baseline", f"{baseline_correct:,} / {n_actual:,}" if n_actual else "—")
+        st.metric("Previous month baseline", f"{baseline_correct:,} / {n_actual:,}" if n_actual else "-")
 
     st.divider()
     if lsoa:
@@ -273,7 +333,7 @@ st.subheader("Top areas flagged for attention")
 st.caption("These are the ten highest-ranked areas for the selected month. Relative risk is a ranking, not a probability or a guarantee that a crime will occur.")
 st.dataframe(
     ranked,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 download_data = month_data[["lsoa_code", "year_month", "risk_score", "risk_band", "pred_binary", "is_hotspot", "total_crimes", "map_status", "signal_position"]].copy()
@@ -311,7 +371,7 @@ with st.expander("Model checks and limitations"):
             "ROC-AUC": "{:.3f}",
             "PAI": "{:.2f}x",
         }),
-        use_container_width=True,
+        width="stretch",
     )
     true_positive = int(((month_data["is_hotspot"] == 1) & (month_data["pred_binary"] == 1)).sum())
     false_positive = int(((month_data["is_hotspot"] == 0) & (month_data["pred_binary"] == 1)).sum())
